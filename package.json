@@ -1,0 +1,22 @@
+{
+  "name": "1688-agent",
+  "version": "1.0.0",
+  "description": "阿里巴巴1688聊天自动回复Agent",
+  "main": "src/main.ts",
+  "type": "module",
+  "scripts": {
+    "start": "npx tsx src/main.ts",
+    "dev": "npx tsx watch src/main.ts",
+    "setup": "npx playwright install chromium --with-deps"
+  },
+  "dependencies": {
+    "playwright": "^1.42.0",
+    "tsx": "^4.7.0",
+    "dotenv": "^16.4.5",
+    "minimatch": "^9.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,159 @@
+// 会话管理器
+
+import { AIReply } from './ai-reply.js';
+import { MessageProcessor } from './message-processor.js';
+
+export interface ChatSession {
+  id: string;
+  name: string;
+  lastMessage: string;
+  lastMessageTime: number;
+  replied: boolean;
+}
+
+export class SessionManager {
+  private sessions: Map<string, ChatSession> = new Map();
+  private aiReply: AIReply;
+  private messageProcessor: MessageProcessor;
+  private chatFrame: any = null;
+
+  constructor() {
+    this.aiReply = new AIReply();
+    this.messageProcessor = new MessageProcessor();
+  }
+
+  // 设置聊天框架
+  setChatFrame(frame: any): void {
+    this.chatFrame = frame;
+  }
+
+  // 处理会话
+  async processSession(session: any): Promise<void> {
+    // 获取会话 ID
+    const sessionId = await session.evaluate((el: Element) => el.getAttribute('data-id') || el.getAttribute('data-session-id') || Math.random().toString());
+    
+    // 获取客户名称
+    const nameEl = await session.$('[class*="name"], [class*="nick"], [class*="buyer-name"]');
+    const customerName = nameEl ? await nameEl.textContent() : '客户';
+
+    // 获取最新消息
+    const msgEl = await session.$('.conversation-secondary-line .desc, [class*="last-msg"], [class*="message"]:last-child, [class*="preview"]');
+    const lastMessage = msgEl ? await msgEl.textContent() : '';
+    console.log(customerName);
+    // 检查是否有未读标记
+    const unreadEl = await session.$('[class*="unread"], [class*="badge"], [class*="dot"]');
+    // temp const hasUnread = unreadEl !== null;
+    
+    const hasUnread = true ;
+    if (!lastMessage || !hasUnread) return;
+
+    // 检查是否已回复
+    const sessionData = this.sessions.get(sessionId);
+    if (sessionData && sessionData.lastMessage === lastMessage) {
+      return; // 消息未变，跳过
+    }
+
+    console.log(`📨 新消息 from ${customerName}: ${lastMessage}`);
+
+    // 生成并发送回复
+    await this.sendReply(session, customerName+':'+lastMessage);
+
+    // 更新会话状态 
+    this.sessions.set(sessionId, {
+      id: sessionId,
+      name: customerName,
+      lastMessage,
+      lastMessageTime: Date.now(),
+      replied: true,
+    });
+  }
+
+  // 发送回复
+  private async sendReply(session: any, customerMessage: string): Promise<void> {
+    // 生成 AI 回复
+  try {
+    await session.click();
+    // 加载对话框中的历史对话
+    const historyMessage = await this.messageProcessor.loadHistoryMessages(this.chatFrame);
+    console.log('📜 历史对话:', historyMessage);
+
+    const reply = await this.aiReply.generateReply(historyMessage + '\n' + customerMessage);
+    console.log(`🤖 生成回复: ${reply}`);
+    await this.sleep(1000);
+
+    // 尝试多种输入方法
+    let inputEl = await this.chatFrame.$('textarea, [contenteditable="true"]');
+    
+    if (inputEl) {
+      // 方法1: 尝试 fill
+      try {
+        await inputEl.fill(reply);
+        console.log('✅ 使用 fill 方法设置内容');
+      } catch (e) {
+        // 方法2: 尝试 type
+        try {
+          await inputEl.type(reply);
+          console.log('✅ 使用 type 方法设置内容');
+        } catch (e2) {
+          // 方法3: 使用 JavaScript
+          await inputEl.evaluate((el: any, value: string) => {
+            el.value = value;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+          }, reply);
+          console.log('✅ 使用 JavaScript 设置内容');
+        }
+      }
+
+      // 发送消息
+      /**const sendBtn = await this.chatFrame.$('[class*="send-btn"]');
+      if (sendBtn) {
+        await sendBtn.click();
+      } else {
+        await inputEl.press('Enter');
+      }
+      console.log('✅ 回复已发送');**/
+    } else {
+      console.log('⚠️ 未找到输入框');
+    }
+  } catch (error) {
+    console.error('❌ 发送回复失败:', error);
+  }
+  }
+
+  // 检查当前打开的聊天窗口中的新消息
+  async checkOpenChat(page: any): Promise<void> {
+    // 检查当前打开的聊天窗口中的新消息
+    // 1688 的聊天窗口通常在右侧或弹出
+
+    const chatFrame = await page.$('[class*="chat-window"], [class*="message-panel"], iframe');
+    
+    if (chatFrame) {
+      try {
+        const messages = await page.$$('[class*="message-content"], [class*="chat-msg"]');
+        
+        for (const msg of messages) {
+          const isFromCustomer = await msg.evaluate((el: Element) => 
+            el.classList.contains('customer') || 
+            el.classList.contains('buyer') ||
+            el.getAttribute('data-sender') === 'customer'
+          );
+          
+          if (isFromCustomer) {
+            const content = await msg.textContent();
+            if (content) {
+              console.log(`💬 客户消息: ${content}`);
+              // 这里可以添加回复逻辑
+            }
+          }
+        }
+      } catch (e) {
+        // 忽略
+      }
+    }
+  }
+
+  // 睡眠函数
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
