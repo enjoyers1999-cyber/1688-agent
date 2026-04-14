@@ -85,6 +85,13 @@ export class ChatMonitor {
     const targetCustomersFile = config.monitor.targetCustomersFile; // 从配置中获取目标客户配置文件路径
     const filteredSessions = await filterSessionsByCustomerName(sessions, targetCustomersFile);
     
+    // 从原始sessions中剔除filteredSessions
+    const remainingSessions = sessions.filter(session => {
+      // 检查session是否在filteredSessions中
+      return !filteredSessions.some(filtered => filtered.session === session);
+    });
+    console.log(`📊 原始会话数: ${sessions.length}, 筛选后会话数: ${filteredSessions.length}, 剩余会话数: ${remainingSessions.length}`);
+    
     if (filteredSessions.length === 0) {
       console.log('⚠️ 未找到匹配的客户会话');
       return;
