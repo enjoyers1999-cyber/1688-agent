@@ -2,11 +2,13 @@
   "targetCustomers": [
     {
       "name": "客户1",
-      "enabled": true
+      "enabled": true,
+      "language": "zh"
     },
     {
       "name": "客户2",
-      "enabled": true
+      "enabled": true,
+      "language": "en"
     }
   ]
 }

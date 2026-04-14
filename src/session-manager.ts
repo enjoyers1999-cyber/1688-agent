@@ -39,13 +39,13 @@ export class SessionManager {
   }
 
   // 处理会话
-  async processSession(session: any): Promise<void> {
+  async processSession(session: any, customer?: { name: string; language?: string }): Promise<void> {
     // 获取会话 ID
     const sessionId = await session.evaluate((el: Element) => el.getAttribute('data-id') || el.getAttribute('data-session-id') || Math.random().toString());
     
     // 获取客户名称
-    const nameEl = await session.$('[class*="name"], [class*="nick"], [class*="buyer-name"]');
-    const customerName = nameEl ? await nameEl.textContent() : '客户';
+    const customerName = customer?.name || '客户';
+    const customerLanguage = customer?.language || 'zh';
 
     // 获取最新消息
     const msgEl = await session.$('.conversation-secondary-line .desc, [class*="last-msg"], [class*="message"]:last-child, [class*="preview"]');
@@ -64,10 +64,10 @@ export class SessionManager {
       return; // 消息未变，跳过
     }
 
-    console.log(`📨 新消息 from ${customerName}: ${lastMessage}`);
+    console.log(`📨 新消息 from ${customerName} (语言: ${customerLanguage}): ${lastMessage}`);
 
     // 生成并发送回复
-    await this.sendReply(session, customerName+':'+lastMessage);
+    await this.sendReply(session, customerName+':'+lastMessage, customerLanguage);
 
     // 更新会话状态 
     this.sessions.set(sessionId, {
@@ -80,7 +80,7 @@ export class SessionManager {
   }
 
   // 发送回复
-  private async sendReply(session: any, customerMessage: string): Promise<void> {
+  private async sendReply(session: any, customerMessage: string, customerLanguage: string = 'zh'): Promise<void> {
     // 生成回复
   try {
     await session.click();
@@ -88,8 +88,12 @@ export class SessionManager {
     let reply: string;
     
     if (config.reply.mode === 'simple') {
-      // 简单模式：直接使用固定回复
-      reply = await this.replyGenerator.generateReply(customerMessage);
+      // 简单模式：根据客户语种使用不同的固定回复
+      if (customerLanguage === 'en') {
+        reply = 'I understand, please wait a moment.';
+      } else {
+        reply = await this.replyGenerator.generateReply(customerMessage);
+      }
     } else {
       // 智能模式：加载历史对话并通过AI生成回复
       const historyMessage = await this.messageProcessor.loadHistoryMessages(this.chatFrame);

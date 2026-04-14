@@ -23,7 +23,7 @@ export const config = {
   // 回复策略
   reply: {
     // 回复模式：'simple'（简单模式）或 'smart'（智能模式）
-    mode: 'smart',
+    mode: 'simple',
     // 简单模式的固定回复内容
     simpleReply: '我知道了，请您稍等。',
     // AI 系统提示词

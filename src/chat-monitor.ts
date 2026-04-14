@@ -92,9 +92,9 @@ export class ChatMonitor {
       return;
     }
     
-    for (const session of filteredSessions) {
+    for (const { session, customer } of filteredSessions) {
       try {
-        await this.sessionManager.processSession(session);
+        await this.sessionManager.processSession(session, customer);
       } catch (e) {
         console.log('处理会话时出错:', e);
       }

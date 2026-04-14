@@ -70,8 +70,7 @@ export function sleep(ms: number): Promise<void> {
 }
 
 // 读取目标客户配置文件
-
-export function readTargetCustomersConfig(configPath: string): { name: string; enabled: boolean }[] {
+export function readTargetCustomersConfig(configPath: string): { name: string; enabled: boolean; language?: string }[] {
   try {
     const fullPath = path.resolve(configPath);
     if (fs.existsSync(fullPath)) {
@@ -89,22 +88,22 @@ export function readTargetCustomersConfig(configPath: string): { name: string; e
 }
 
 // 筛选指定客户名称的会话
-export async function filterSessionsByCustomerName(sessions: any[], targetCustomersFile: string): Promise<any[]> {
+export async function filterSessionsByCustomerName(sessions: any[], targetCustomersFile: string): Promise<{ session: any; customer: { name: string; language?: string } }[]> {
   const targetCustomers = readTargetCustomersConfig(targetCustomersFile);
   
   if (targetCustomers.length === 0) {
     console.log('ℹ️ 未配置目标客户，处理所有会话');
-    return sessions;
+    return sessions.map(session => ({ session, customer: { name: '未知客户' } }));
   }
   
   const enabledCustomers = targetCustomers.filter(customer => customer.enabled);
   if (enabledCustomers.length === 0) {
     console.log('ℹ️ 没有启用的目标客户，处理所有会话');
-    return sessions;
+    return sessions.map(session => ({ session, customer: { name: '未知客户' } }));
   }
   
   console.log(`🔍 筛选客户名称为 ${enabledCustomers.map(c => `"${c.name}"`).join(', ')} 的会话`);
-  const filteredSessions: any[] = [];
+  const filteredSessions: { session: any; customer: { name: string; language?: string } }[] = [];
   
   for (const session of sessions) {
     try {
@@ -112,10 +111,16 @@ export async function filterSessionsByCustomerName(sessions: any[], targetCustom
       if (nickElement) {
         const customerName = await nickElement.textContent();
         if (customerName) {
-          const isMatch = enabledCustomers.some(customer => customerName.includes(customer.name));
-          if (isMatch) {
-            filteredSessions.push(session);
-            console.log(`✅ 找到匹配的客户会话: ${customerName}`);
+          const matchedCustomer = enabledCustomers.find(customer => customerName.includes(customer.name));
+          if (matchedCustomer) {
+            filteredSessions.push({ 
+              session, 
+              customer: { 
+                name: customerName, 
+                language: matchedCustomer.language 
+              } 
+            });
+            console.log(`✅ 找到匹配的客户会话: ${customerName} (语言: ${matchedCustomer.language || '未知'})`);
           }
         }
       }

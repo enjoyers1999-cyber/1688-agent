@@ -5,7 +5,7 @@ export class AIReply {
   private useAI: boolean;
 
   constructor() {
-    this.useAI = config.reply.useAI;
+    this.useAI = config.reply.mode === 'smart';
   }
 
   // 生成回复
