@@ -125,7 +125,9 @@ export class SessionManager {
       }
     }
     
-    console.log(`🤖 生成回复 to ${customerName}: ${reply}`);
+    // 记录回复生成时间
+    const replyTime = new Date().toLocaleString();
+    console.log(`🤖 生成回复 to ${customerName} [${replyTime}]: ${reply}`);
     await this.sleep(1000);
 
     // 尝试多种输入方法
