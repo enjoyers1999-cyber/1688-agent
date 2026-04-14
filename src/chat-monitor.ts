@@ -52,8 +52,13 @@ export class ChatMonitor {
     console.log('🔍 开始检查新消息...');
     console.log('当前页面:', this.page.url());
     
-    // 等待页面完全加载
-    await this.page.waitForLoadState('networkidle');
+    // 等待页面加载完成（使用load状态，比networkidle更宽松）
+    try {
+      await this.page.waitForLoadState('load', { timeout: 60000 }); // 增加超时时间到60秒
+    } catch (error) {
+      console.warn('⚠️ 页面加载超时，继续执行', error);
+      // 即使超时也继续执行，因为页面可能已经加载了足够的内容
+    }
     
     // 检查是否需要登录
     if (isLoginRequired(this.page.url())) {

@@ -56,9 +56,9 @@ export class SessionManager {
     console.log(customerName);
     // 检查是否有未读标记
     const unreadEl = await session.$('[class*="unread"], [class*="badge"], [class*="dot"]');
-    // temp const hasUnread = unreadEl !== null;
+    const hasUnread = unreadEl !== null;
     
-    const hasUnread = true ;
+    //const hasUnread = true ;
     if (!lastMessage || !hasUnread) return;
 
     // 检查是否已回复
@@ -102,7 +102,7 @@ export class SessionManager {
     }
     
     try {
-      // await session.click();
+       await session.click();
     } catch (clickError) {
       console.warn('⚠️ 点击会话元素失败:', clickError);
       return;
@@ -135,7 +135,7 @@ export class SessionManager {
       let inputEl = await this.chatFrame.$('textarea, [contenteditable="true"]');
       
       if (inputEl) {
-       /**   
+         
         // 方法1: 尝试 fill
         try {
           await inputEl.fill(reply);
@@ -154,9 +154,7 @@ export class SessionManager {
             console.log('✅ 使用 JavaScript 设置内容');
           }
         }
-        **/
-
-        /**
+        
         // 发送消息
         const sendBtn = await this.chatFrame.$('[class*="send-btn"]');
         if (sendBtn) {
@@ -165,7 +163,6 @@ export class SessionManager {
           await inputEl.press('Enter');
         }
         console.log('✅ 回复已发送');
-        **/
 
       } else {
         console.log('⚠️ 未找到输入框');
