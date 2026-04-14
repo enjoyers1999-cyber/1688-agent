@@ -107,7 +107,7 @@ export async function filterSessionsByCustomerName(sessions: any[], targetCustom
   
   for (const session of sessions) {
     try {
-      const nickElement = await session.$('[class*="nick"]');
+      const nickElement = await session.$('[class*="name"]');
       if (nickElement) {
         const customerName = await nickElement.textContent();
         if (customerName) {

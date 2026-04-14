@@ -48,7 +48,7 @@ export class SessionManager {
     
     // 获取客户名称
     const customerName = customer?.name || '客户';
-    const customerLanguage = customer?.language || 'zh';
+    const customerLanguage = customer?.language || '中文';
 
     // 获取最新消息
     const msgEl = await session.$('.conversation-secondary-line .desc, [class*="last-msg"], [class*="message"]:last-child, [class*="preview"]');
@@ -86,7 +86,25 @@ export class SessionManager {
   private async sendReply(session: any, customerMessage: string, customerLanguage: string = 'zh'): Promise<void> {
     // 生成回复
   try {
-    await session.click();
+    // 检查元素是否仍然存在
+    try {
+      // 尝试获取元素的可见性状态
+      const isVisible = await session.isVisible().catch(() => false);
+      if (!isVisible) {
+        console.warn('⚠️ 会话元素不可见或已从DOM中移除');
+        return;
+      }
+    } catch (visibilityError) {
+      console.warn('⚠️ 无法检查会话元素状态:', visibilityError);
+      return;
+    }
+    
+    try {
+      await session.click();
+    } catch (clickError) {
+      console.warn('⚠️ 点击会话元素失败:', clickError);
+      return;
+    }
     
     let reply: string;
     
@@ -95,47 +113,61 @@ export class SessionManager {
       reply = this.defaultReply.getDefaultReply(customerLanguage);
     } else {
       // 智能模式：加载历史对话并通过AI生成回复
-      const historyMessage = await this.messageProcessor.loadHistoryMessages(this.chatFrame);
-      // console.log('📜 历史对话:', historyMessage);
-      reply = await this.replyGenerator.generateReply(historyMessage + '\n' + customerMessage);
+      try {
+        const historyMessage = await this.messageProcessor.loadHistoryMessages(this.chatFrame);
+        // console.log('📜 历史对话:', historyMessage);
+        reply = await this.replyGenerator.generateReply(historyMessage + '\n' + customerMessage);
+      } catch (historyError) {
+        console.warn('⚠️ 加载历史对话失败，使用默认回复:', historyError);
+        reply = this.defaultReply.getDefaultReply(customerLanguage);
+      }
     }
     
     console.log(`🤖 生成回复: ${reply}`);
     await this.sleep(1000);
 
     // 尝试多种输入方法
-    let inputEl = await this.chatFrame.$('textarea, [contenteditable="true"]');
-    
-    if (inputEl) {
-      // 方法1: 尝试 fill
-      try {
-        await inputEl.fill(reply);
-        console.log('✅ 使用 fill 方法设置内容');
-      } catch (e) {
-        // 方法2: 尝试 type
+    try {
+      let inputEl = await this.chatFrame.$('textarea, [contenteditable="true"]');
+      
+      if (inputEl) {
+       /**   
+        // 方法1: 尝试 fill
         try {
-          await inputEl.type(reply);
-          console.log('✅ 使用 type 方法设置内容');
-        } catch (e2) {
-          // 方法3: 使用 JavaScript
-          await inputEl.evaluate((el: any, value: string) => {
-            el.value = value;
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-          }, reply);
-          console.log('✅ 使用 JavaScript 设置内容');
+          await inputEl.fill(reply);
+          console.log('✅ 使用 fill 方法设置内容');
+        } catch (e) {
+          // 方法2: 尝试 type
+          try {
+            await inputEl.type(reply);
+            console.log('✅ 使用 type 方法设置内容');
+          } catch (e2) {
+            // 方法3: 使用 JavaScript
+            await inputEl.evaluate((el: any, value: string) => {
+              el.value = value;
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+            }, reply);
+            console.log('✅ 使用 JavaScript 设置内容');
+          }
         }
-      }
+        **/
 
-      // 发送消息
-      /**const sendBtn = await this.chatFrame.$('[class*="send-btn"]');
-      if (sendBtn) {
-        await sendBtn.click();
+        /**
+        // 发送消息
+        const sendBtn = await this.chatFrame.$('[class*="send-btn"]');
+        if (sendBtn) {
+          await sendBtn.click();
+        } else {
+          await inputEl.press('Enter');
+        }
+        console.log('✅ 回复已发送');
+        **/
+
       } else {
-        await inputEl.press('Enter');
+        console.log('⚠️ 未找到输入框');
       }
-      console.log('✅ 回复已发送');**/
-    } else {
-      console.log('⚠️ 未找到输入框');
+    } catch (inputError) {
+      console.warn('⚠️ 处理输入框失败:', inputError);
     }
   } catch (error) {
     console.error('❌ 发送回复失败:', error);

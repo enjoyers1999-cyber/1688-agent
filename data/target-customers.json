@@ -1,14 +1,14 @@
 {
   "targetCustomers": [
     {
-      "name": "客户1",
+      "name": "唐氏花喜庆用品888",
       "enabled": true,
       "language": "中文"
     },
     {
-      "name": "客户2",
+      "name": "佛山市泓达家具有限公司",
       "enabled": true,
-      "language": "英文"
+      "language": "中文"
     }
   ]
 }

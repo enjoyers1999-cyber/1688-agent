@@ -75,14 +75,7 @@ export class ChatMonitor {
     console.log('在', this.chatFrame ? 'iframe' : '主页面', '中查找会话');
     
     const sessions = await findSessions(searchPage);
-    
-    if (sessions.length === 0) {
-      console.log('⚠️ 未找到任何会话，开始调试页面结构...');
-      // 检查是否需要登录
-      if (isLoginRequired(this.page.url())) {
-        console.log('🔐 页面需要登录');
-    }
-    
+
     // 筛选指定客户名称的会话
     const targetCustomersFile = config.monitor.targetCustomersFile; // 从配置中获取目标客户配置文件路径
     const filteredSessions = await filterSessionsByCustomerName(sessions, targetCustomersFile);
@@ -99,6 +92,13 @@ export class ChatMonitor {
         console.log('处理会话时出错:', e);
       }
     }
+    
+    if (filteredSessions.length === 0) {
+      console.log('⚠️ 未找到任何会话，开始调试页面结构...');
+      // 检查是否需要登录
+      if (isLoginRequired(this.page.url())) {
+        console.log('🔐 页面需要登录');
+      }
 
       return;
     }
