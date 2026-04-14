@@ -67,7 +67,9 @@ export class SessionManager {
       return; // 消息未变，跳过
     }
 
-    console.log(`📨 新消息 from ${customerName} (语言: ${customerLanguage}): ${lastMessage}`);
+    // 记录消息接收时间
+    const receiveTime = new Date().toLocaleString();
+    console.log(`📨 新消息 from ${customerName} (语言: ${customerLanguage}) [${receiveTime}]: ${lastMessage}`);
 
     // 生成并发送回复
     await this.sendReply(session, customerName+':'+lastMessage, customerLanguage, customerName);
