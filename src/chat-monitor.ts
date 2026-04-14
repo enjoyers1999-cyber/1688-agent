@@ -123,15 +123,14 @@ export class ChatMonitor {
       console.log('📭 没有非目标客户会话需要切换');
     }
     
-    if (filteredSessions.length === 0) {
+  if (filteredSessions.length === 0) {
       console.log('⚠️ 未找到任何会话，开始调试页面结构...');
       // 检查是否需要登录
       if (isLoginRequired(this.page.url())) {
         console.log('🔐 页面需要登录');
-      }
-
-      return;
     }
+    return;
+  }
     
   }
 }
