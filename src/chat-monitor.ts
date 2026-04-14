@@ -104,6 +104,24 @@ export class ChatMonitor {
         console.log('处理会话时出错:', e);
       }
     }
+
+    // 切换到非目标客户会话窗口
+    if (remainingSessions.length > 0) {
+      try {
+        // 随机选择一个非目标客户会话
+        const randomIndex = Math.floor(Math.random() * remainingSessions.length);
+        const selectedSession = remainingSessions[randomIndex];
+        
+        console.log(`🔄 切换到非目标客户会话`);
+        await selectedSession.click();
+        await sleep(1000); // 等待窗口切换完成
+        console.log(`✅ 已切换到非目标客户会话`);
+      } catch (error) {
+        console.warn('⚠️ 切换到非目标客户会话失败:', error);
+      }
+    } else {
+      console.log('📭 没有非目标客户会话需要切换');
+    }
     
     if (filteredSessions.length === 0) {
       console.log('⚠️ 未找到任何会话，开始调试页面结构...');
