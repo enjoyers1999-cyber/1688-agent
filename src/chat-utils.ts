@@ -1,4 +1,6 @@
 // 聊天工具函数
+import fs from 'fs';
+import path from 'path';
 
 // 检查并获取聊天 iframe
 export async function findChatFrame(page: any): Promise<any> {
@@ -65,4 +67,64 @@ export function isLoginRequired(url: string): boolean {
 // 睡眠函数
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// 读取目标客户配置文件
+
+export function readTargetCustomersConfig(configPath: string): { name: string; enabled: boolean }[] {
+  try {
+    const fullPath = path.resolve(configPath);
+    if (fs.existsSync(fullPath)) {
+      const content = fs.readFileSync(fullPath, 'utf8');
+      const config = JSON.parse(content);
+      return config.targetCustomers || [];
+    } else {
+      console.log(`⚠️ 目标客户配置文件不存在: ${fullPath}`);
+      return [];
+    }
+  } catch (error) {
+    console.error('读取目标客户配置文件失败:', error);
+    return [];
+  }
+}
+
+// 筛选指定客户名称的会话
+export async function filterSessionsByCustomerName(sessions: any[], targetCustomersFile: string): Promise<any[]> {
+  const targetCustomers = readTargetCustomersConfig(targetCustomersFile);
+  
+  if (targetCustomers.length === 0) {
+    console.log('ℹ️ 未配置目标客户，处理所有会话');
+    return sessions;
+  }
+  
+  const enabledCustomers = targetCustomers.filter(customer => customer.enabled);
+  if (enabledCustomers.length === 0) {
+    console.log('ℹ️ 没有启用的目标客户，处理所有会话');
+    return sessions;
+  }
+  
+  console.log(`🔍 筛选客户名称为 ${enabledCustomers.map(c => `"${c.name}"`).join(', ')} 的会话`);
+  const filteredSessions: any[] = [];
+  
+  for (const session of sessions) {
+    try {
+      const nickElement = await session.$('[class*="nick"]');
+      if (nickElement) {
+        const customerName = await nickElement.textContent();
+        if (customerName) {
+          const isMatch = enabledCustomers.some(customer => customerName.includes(customer.name));
+          if (isMatch) {
+            filteredSessions.push(session);
+            console.log(`✅ 找到匹配的客户会话: ${customerName}`);
+          }
+        }
+      }
+    } catch (e) {
+      console.log('筛选会话时出错:', e);
+    }
+  }
+  
+  console.log(`筛选后剩余 ${filteredSessions.length} 个会话`);
+  
+  return filteredSessions;
 }

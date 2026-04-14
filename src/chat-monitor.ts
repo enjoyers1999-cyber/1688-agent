@@ -1,7 +1,7 @@
 import { Page } from 'playwright';
 import { config } from './config.js';
 import { SessionManager } from './session-manager.js';
-import { findChatFrame, findSessions, isLoginRequired, sleep } from './chat-utils.js';
+import { findChatFrame, findSessions, filterSessionsByCustomerName, isLoginRequired, sleep } from './chat-utils.js';
 
 // 聊天监控器
 export class ChatMonitor {
@@ -81,18 +81,28 @@ export class ChatMonitor {
       // 检查是否需要登录
       if (isLoginRequired(this.page.url())) {
         console.log('🔐 页面需要登录');
-      }
-      
+    }
+    
+    // 筛选指定客户名称的会话
+    const targetCustomersFile = config.monitor.targetCustomersFile; // 从配置中获取目标客户配置文件路径
+    const filteredSessions = await filterSessionsByCustomerName(sessions, targetCustomersFile);
+    
+    if (filteredSessions.length === 0) {
+      console.log('⚠️ 未找到匹配的客户会话');
       return;
     }
     
-    for (const session of sessions) {
+    for (const session of filteredSessions) {
       try {
         await this.sessionManager.processSession(session);
       } catch (e) {
         console.log('处理会话时出错:', e);
       }
     }
+
+      return;
+    }
+    
   }
 }
 

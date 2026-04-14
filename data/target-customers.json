@@ -1,0 +1,12 @@
+{
+  "targetCustomers": [
+    {
+      "name": "客户1",
+      "enabled": true
+    },
+    {
+      "name": "客户2",
+      "enabled": true
+    }
+  ]
+}

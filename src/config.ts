@@ -52,6 +52,8 @@ export const config = {
     intervalMs: 3000,
     // 最大连续错误次数，超过后重启浏览器
     maxErrors: 5,
+    // 目标客户配置文件路径
+    targetCustomersFile: './data/target-customers.json',
   },
 
   // 日志
