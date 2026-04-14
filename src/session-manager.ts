@@ -1,7 +1,13 @@
 // 会话管理器
 
+import { config } from './config.js';
 import { AIReply } from './ai-reply.js';
+import { SimpleReply } from './simple-reply.js';
 import { MessageProcessor } from './message-processor.js';
+
+export interface ReplyGenerator {
+  generateReply(customerMessage: string): Promise<string>;
+}
 
 export interface ChatSession {
   id: string;
@@ -13,12 +19,17 @@ export interface ChatSession {
 
 export class SessionManager {
   private sessions: Map<string, ChatSession> = new Map();
-  private aiReply: AIReply;
+  private replyGenerator: ReplyGenerator;
   private messageProcessor: MessageProcessor;
   private chatFrame: any = null;
 
   constructor() {
-    this.aiReply = new AIReply();
+    // 根据配置创建相应的回复处理器
+    if (config.reply.mode === 'simple') {
+      this.replyGenerator = new SimpleReply();
+    } else {
+      this.replyGenerator = new AIReply();
+    }
     this.messageProcessor = new MessageProcessor();
   }
 
@@ -70,14 +81,22 @@ export class SessionManager {
 
   // 发送回复
   private async sendReply(session: any, customerMessage: string): Promise<void> {
-    // 生成 AI 回复
+    // 生成回复
   try {
     await session.click();
-    // 加载对话框中的历史对话
-    const historyMessage = await this.messageProcessor.loadHistoryMessages(this.chatFrame);
-    console.log('📜 历史对话:', historyMessage);
-
-    const reply = await this.aiReply.generateReply(historyMessage + '\n' + customerMessage);
+    
+    let reply: string;
+    
+    if (config.reply.mode === 'simple') {
+      // 简单模式：直接使用固定回复
+      reply = await this.replyGenerator.generateReply(customerMessage);
+    } else {
+      // 智能模式：加载历史对话并通过AI生成回复
+      const historyMessage = await this.messageProcessor.loadHistoryMessages(this.chatFrame);
+      console.log('📜 历史对话:', historyMessage);
+      reply = await this.replyGenerator.generateReply(historyMessage + '\n' + customerMessage);
+    }
+    
     console.log(`🤖 生成回复: ${reply}`);
     await this.sleep(1000);
 
