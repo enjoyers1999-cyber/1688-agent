@@ -70,7 +70,7 @@ export class SessionManager {
     console.log(`📨 新消息 from ${customerName} (语言: ${customerLanguage}): ${lastMessage}`);
 
     // 生成并发送回复
-    await this.sendReply(session, customerName+':'+lastMessage, customerLanguage);
+    await this.sendReply(session, customerName+':'+lastMessage, customerLanguage, customerName);
 
     // 更新会话状态 
     this.sessions.set(sessionId, {
@@ -83,7 +83,7 @@ export class SessionManager {
   }
 
   // 发送回复
-  private async sendReply(session: any, customerMessage: string, customerLanguage: string = 'zh'): Promise<void> {
+  private async sendReply(session: any, customerMessage: string, customerLanguage: string = 'zh', customerName: string = '客户'): Promise<void> {
     // 生成回复
   try {
     // 检查元素是否仍然存在
@@ -100,7 +100,7 @@ export class SessionManager {
     }
     
     try {
-      await session.click();
+      // await session.click();
     } catch (clickError) {
       console.warn('⚠️ 点击会话元素失败:', clickError);
       return;
@@ -123,7 +123,7 @@ export class SessionManager {
       }
     }
     
-    console.log(`🤖 生成回复: ${reply}`);
+    console.log(`🤖 生成回复 to ${customerName}: ${reply}`);
     await this.sleep(1000);
 
     // 尝试多种输入方法
