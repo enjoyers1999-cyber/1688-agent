@@ -3,12 +3,12 @@
     {
       "name": "客户1",
       "enabled": true,
-      "language": "zh"
+      "language": "中文"
     },
     {
       "name": "客户2",
       "enabled": true,
-      "language": "en"
+      "language": "英文"
     }
   ]
 }

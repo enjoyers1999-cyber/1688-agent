@@ -3,6 +3,7 @@
 import { config } from './config.js';
 import { AIReply } from './ai-reply.js';
 import { SimpleReply } from './simple-reply.js';
+import { DefaultReply } from './default-reply.js';
 import { MessageProcessor } from './message-processor.js';
 
 export interface ReplyGenerator {
@@ -20,6 +21,7 @@ export interface ChatSession {
 export class SessionManager {
   private sessions: Map<string, ChatSession> = new Map();
   private replyGenerator: ReplyGenerator;
+  private defaultReply: DefaultReply;
   private messageProcessor: MessageProcessor;
   private chatFrame: any = null;
 
@@ -30,6 +32,7 @@ export class SessionManager {
     } else {
       this.replyGenerator = new AIReply();
     }
+    this.defaultReply = new DefaultReply();
     this.messageProcessor = new MessageProcessor();
   }
 
@@ -89,15 +92,11 @@ export class SessionManager {
     
     if (config.reply.mode === 'simple') {
       // 简单模式：根据客户语种使用不同的固定回复
-      if (customerLanguage === 'en') {
-        reply = 'I understand, please wait a moment.';
-      } else {
-        reply = await this.replyGenerator.generateReply(customerMessage);
-      }
+      reply = this.defaultReply.getDefaultReply(customerLanguage);
     } else {
       // 智能模式：加载历史对话并通过AI生成回复
       const historyMessage = await this.messageProcessor.loadHistoryMessages(this.chatFrame);
-      console.log('📜 历史对话:', historyMessage);
+      // console.log('📜 历史对话:', historyMessage);
       reply = await this.replyGenerator.generateReply(historyMessage + '\n' + customerMessage);
     }
     
